@@ -144,7 +144,6 @@ defmodule Advent1 do
       |> Enum.reduce(0, fn num, acc -> acc + num end)
 
     IO.puts(total)
-    IO.puts(total === 1019)
   end
 end
 
