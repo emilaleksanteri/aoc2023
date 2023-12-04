@@ -91,11 +91,6 @@ func game() int {
 		gamesStore = append(gamesStore, store)
 	}
 
-	var configStore cubeStore
-	configStore.red = 12
-	configStore.green = 13
-	configStore.blue = 14
-
 	var total int
 	for _, store := range gamesStore {
 		cubeTotal := store.red * store.blue * store.green
