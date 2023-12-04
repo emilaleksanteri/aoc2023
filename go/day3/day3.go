@@ -48,15 +48,21 @@ type coordinate struct {
 }
 
 type partScanner struct {
-	preLine     string
-	currLine    string
-	nextLine    string
-	checkedNums map[string]map[coordinate]bool
-	curr        int
-	next        int
-	board       []string
-	total       int
-	calNums     []string
+	preLine        string
+	currLine       string
+	nextLine       string
+	checkedNums    map[string]map[coordinate]bool
+	curr           int
+	next           int
+	board          []string
+	total          int
+	gearRatioTotal int
+	calNums        []string
+}
+
+type gearNumFind struct {
+	gears      map[string]map[coordinate]bool
+	numOfGears int
 }
 
 type parts []int
@@ -132,15 +138,9 @@ func (ps *partScanner) readByte() byte {
 	return ps.currLine[ps.curr]
 }
 
-func (ps *partScanner) scanForNums(number string, i int, line string, y, x int) {
-	numRange := len(number) + i
-	coordMap := map[coordinate]bool{}
-	for j := i; j < numRange; j++ {
-		coordMap[coordinate{x: j, y: y}] = true
-	}
-
+func checkForOverlapping(check map[string]map[coordinate]bool, coordMap map[coordinate]bool, number string) bool {
 	seen := false
-	if num, ok := ps.checkedNums[number]; ok {
+	if num, ok := check[number]; ok {
 		for k := range num {
 			if _, ok := coordMap[k]; ok {
 				seen = true
@@ -149,14 +149,32 @@ func (ps *partScanner) scanForNums(number string, i int, line string, y, x int) 
 		}
 	}
 
+	return seen
+}
+
+func (ps *partScanner) scanForNums(number string, i int, line string, y, x int, gear *gearNumFind) {
+	numRange := len(number) + i
+	coordMap := map[coordinate]bool{}
+	for j := i; j < numRange; j++ {
+		coordMap[coordinate{x: j, y: y}] = true
+	}
+
+	seen := checkForOverlapping(ps.checkedNums, coordMap, number)
+	seenGear := checkForOverlapping(gear.gears, coordMap, number)
+
 	if !seen {
 		ps.total += ps.parseNum(number)
 		ps.calNums = append(ps.calNums, number)
 		ps.checkedNums[number] = coordMap
 	}
+
+	if !seenGear {
+		gear.gears[number] = coordMap
+		gear.numOfGears++
+	}
 }
 
-func (ps *partScanner) scanOneLine(line string, y int, x int) {
+func (ps *partScanner) scanOneLine(line string, y int, x int, gearSymbol bool, gear *gearNumFind) {
 	var scanTill int
 	if x+1 < len(line) {
 		scanTill = x + 1
@@ -190,33 +208,51 @@ func (ps *partScanner) scanOneLine(line string, y int, x int) {
 				f := ps.scanNumber(i, line)
 				number := b[:len(b)-1] + c + f[1:]
 
-				ps.scanForNums(number, i, line, y, i)
-
+				ps.scanForNums(number, i, line, y, i, gear)
 			} else if forwardOk {
 				number := ps.scanNumber(i, line)
-				ps.scanForNums(number, i, line, y, i)
+				ps.scanForNums(number, i, line, y, i, gear)
 			} else if backwardsOk {
 				number := ps.scanNumberBackwards(i, line)
-				ps.scanForNums(number, i, line, y, i)
+				ps.scanForNums(number, i, line, y, i, gear)
 			} else if currOk {
 				number := string(line[i])
-				ps.scanForNums(number, i, line, y, i)
+				ps.scanForNums(number, i, line, y, i, gear)
 			}
 		}
 	}
 
 }
 
-func (ps *partScanner) scanSquare(pos coordinate) {
+func (ps *partScanner) scanSquare(pos coordinate, gearSymbol bool) {
+	var gearNum gearNumFind
+	gearNum.gears = map[string]map[coordinate]bool{}
 	// 3 x 3 square
 	if ps.preLine != "" {
-		ps.scanOneLine(ps.preLine, pos.y-1, pos.x)
+		ps.scanOneLine(ps.preLine, pos.y-1, pos.x, gearSymbol, &gearNum)
 	}
 	if ps.currLine != "" {
-		ps.scanOneLine(ps.currLine, pos.y, pos.x)
+		ps.scanOneLine(ps.currLine, pos.y, pos.x, gearSymbol, &gearNum)
 	}
 	if ps.nextLine != "" {
-		ps.scanOneLine(ps.nextLine, pos.y+1, pos.x)
+		ps.scanOneLine(ps.nextLine, pos.y+1, pos.x, gearSymbol, &gearNum)
+	}
+
+	if gearSymbol && gearNum.numOfGears == 2 {
+		count := 0
+		var first int
+		var second int
+		for g := range gearNum.gears {
+			if count == 0 {
+				first = ps.parseNum(g)
+			} else if count == 1 {
+				second = ps.parseNum(g)
+				break
+			}
+			count += 1
+		}
+
+		ps.gearRatioTotal += first * second
 	}
 }
 
@@ -226,7 +262,12 @@ func (ps *partScanner) scanLine(line string, y int) {
 
 	for ps.move() {
 		if _, ok := invalidSymbols[string(ps.readByte())]; !ok {
-			ps.scanSquare(coordinate{x: ps.curr, y: y})
+			var gearSymbol bool
+			if ps.readByte() == '*' {
+				gearSymbol = true
+			}
+
+			ps.scanSquare(coordinate{x: ps.curr, y: y}, gearSymbol)
 		}
 	}
 
@@ -267,6 +308,7 @@ func day3() {
 	}
 
 	fmt.Println(ps.total)
+	fmt.Println(ps.gearRatioTotal)
 
 	if fileName == "test.txt" {
 		fmt.Println(ps.total == 6384)
