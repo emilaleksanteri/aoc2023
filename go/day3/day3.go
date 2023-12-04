@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"regexp"
 	"strconv"
 )
 
@@ -43,25 +42,9 @@ var nums = map[string]bool{
 	"9": true,
 }
 
-var regNum = regexp.MustCompile("[0-9]+")
-
-type numInLine struct {
-	number    string
-	validPart bool
-	checked   bool
-}
-
 type coordinate struct {
 	x int
 	y int
-}
-
-type checkedNum struct {
-	num   string
-	xFrom int
-	yFrom int
-	xTo   int
-	yTo   int
 }
 
 type partScanner struct {
@@ -77,22 +60,6 @@ type partScanner struct {
 }
 
 type parts []int
-
-func (ps *partScanner) nextIsSymbol() bool {
-	if _, ok := invalidSymbols[string(ps.readByte())]; !ok {
-		return true
-	}
-
-	return false
-}
-
-func (ps *partScanner) previousIsSymbol(numStart int) bool {
-	if _, ok := invalidSymbols[string(ps.currLine[numStart-1])]; !ok {
-		return true
-	}
-
-	return false
-}
 
 func (ps *partScanner) parseNum(num string) int {
 	int, err := strconv.Atoi(num)
@@ -163,14 +130,6 @@ func (ps *partScanner) moveNext() {
 
 func (ps *partScanner) readByte() byte {
 	return ps.currLine[ps.curr]
-}
-
-func (ps *partScanner) peak() byte {
-	return ps.currLine[ps.next]
-}
-
-func (ps *partScanner) peakBack() byte {
-	return ps.currLine[ps.curr-1]
 }
 
 func (ps *partScanner) scanForNums(number string, i int, line string, y, x int) {
