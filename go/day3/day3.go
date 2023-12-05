@@ -274,7 +274,7 @@ func (ps *partScanner) scanLine(line string, y int) {
 }
 
 func day3() {
-	fileName := "input.txt"
+	fileName := "test.txt"
 	file, err := os.Open(fileName)
 	if err != nil {
 		panic(err)
