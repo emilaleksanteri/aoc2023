@@ -89,14 +89,14 @@ defmodule Day3 do
   end
 
   def parse_nums(seen, nums, idx) do
-    if idx === length(nums) - 1 do
+    if idx >= length(nums) do
       seen
     else
-      {num, coords} = Enum.at(nums, idx)
+      {coords, num} = Enum.at(nums, idx)
 
       if Map.get(seen, num) === nil do
         parse_nums(
-          Map.put(seen, num, coords),
+          Map.put(seen, coords, num),
           nums,
           idx + 1
         )
@@ -147,7 +147,7 @@ defmodule Day3 do
 
               case is_member?(range, x) do
                 true ->
-                  {num, coords}
+                  {coords, num}
 
                 false ->
                   {nil, coords}
@@ -193,7 +193,7 @@ defmodule Day3 do
 
     total_part_num =
       parse_nums(%{}, within_symbol, 0)
-      |> Enum.reduce(0, fn {num, _c}, acc ->
+      |> Enum.reduce(0, fn {_, num}, acc ->
         acc + num
       end)
 
@@ -202,7 +202,7 @@ defmodule Day3 do
 
   def main do
     board =
-      File.read!("test.txt")
+      File.read!("input.txt")
       |> String.split("\n")
 
     totals = look_up(board)

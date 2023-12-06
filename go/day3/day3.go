@@ -274,7 +274,7 @@ func (ps *partScanner) scanLine(line string, y int) {
 }
 
 func day3() {
-	fileName := "test.txt"
+	fileName := "input.txt"
 	file, err := os.Open(fileName)
 	if err != nil {
 		panic(err)
@@ -306,7 +306,6 @@ func day3() {
 
 		ps.scanLine(line, y)
 	}
-	fmt.Println(ps.calNums)
 
 	fmt.Println(ps.total)
 	fmt.Println(ps.gearRatioTotal)
