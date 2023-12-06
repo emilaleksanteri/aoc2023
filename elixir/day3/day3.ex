@@ -106,6 +106,27 @@ defmodule Day3 do
     end
   end
 
+  def get_nums_for_symbol(x, y, nums) do
+    nums
+    |> Enum.map(fn {coords, num} ->
+      case coords.y + 1 === y or coords.y === y or coords.y - 1 === y do
+        false ->
+          {nil, coords}
+
+        true ->
+          range = Enum.to_list(coords.x)
+
+          case is_member?(range, x) do
+            true ->
+              {coords, num}
+
+            false ->
+              {nil, coords}
+          end
+      end
+    end)
+  end
+
   def look_up(board) do
     parsed =
       board
@@ -136,65 +157,33 @@ defmodule Day3 do
       |> Enum.map(fn {key, _} ->
         {x, y} = key
 
-        nums
-        |> Enum.map(fn {coords, num} ->
-          case coords.y + 1 === y or coords.y === y or coords.y - 1 === y do
-            false ->
-              {nil, coords}
-
-            true ->
-              range = Enum.to_list(coords.x)
-
-              case is_member?(range, x) do
-                true ->
-                  {coords, num}
-
-                false ->
-                  {nil, coords}
-              end
-          end
-        end)
+        get_nums_for_symbol(x, y, nums)
         |> Enum.filter(fn {num, _} -> num !== nil end)
       end)
       |> Enum.reduce(fn acc, row -> acc ++ row end)
+
+    total_part_num =
+      parse_nums(%{}, within_symbol, 0)
+      |> Enum.reduce(0, fn {_, num}, acc ->
+        acc + num
+      end)
 
     gear_total =
       gears
       |> Enum.map(fn {coords, _} ->
         {x, y} = coords
 
-        nums
-        |> Enum.map(fn {coords, num} ->
-          case coords.y + 1 === y or coords.y === y or coords.y - 1 === y do
-            false ->
-              {nil, coords}
-
-            true ->
-              range = Enum.to_list(coords.x)
-
-              case is_member?(range, x) do
-                true ->
-                  {num, coords}
-
-                false ->
-                  {nil, coords}
-              end
-          end
-        end)
-        |> Enum.filter(fn {num, _} -> num !== nil end)
+        get_nums_for_symbol(x, y, nums)
+        |> Enum.filter(fn {coords, _num} -> coords !== nil end)
       end)
-      |> Enum.filter(fn nums -> length(nums) === 2 end)
+      |> Enum.filter(fn input ->
+        length(input) === 2
+      end)
       |> Enum.reduce(0, fn row, acc ->
-        {num, _} = Enum.at(row, 0)
-        {num2, _} = Enum.at(row, 1)
+        {_, num} = Enum.at(row, 0)
+        {_, num2} = Enum.at(row, 1)
 
         acc + num * num2
-      end)
-
-    total_part_num =
-      parse_nums(%{}, within_symbol, 0)
-      |> Enum.reduce(0, fn {_, num}, acc ->
-        acc + num
       end)
 
     %{parts_total: total_part_num, geat_total: gear_total}
