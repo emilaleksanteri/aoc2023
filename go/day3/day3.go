@@ -306,6 +306,7 @@ func day3() {
 
 		ps.scanLine(line, y)
 	}
+	fmt.Println(ps.calNums)
 
 	fmt.Println(ps.total)
 	fmt.Println(ps.gearRatioTotal)

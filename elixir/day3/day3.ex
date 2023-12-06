@@ -39,7 +39,7 @@ defmodule Day3 do
   def parse_row_nums(<<char, rest::binary>>, d0, x, y, numStore, sinceFirstNum)
       when char not in ?0..?9 and d0 !== nil do
     numStore =
-      Map.put(numStore, d0, %{x: (x - sinceFirstNum)..(x - 1), y: y})
+      Map.put(numStore, %{x: (x - sinceFirstNum)..(x - 1), y: y}, d0)
 
     parse_row_nums(
       rest,
@@ -58,7 +58,7 @@ defmodule Day3 do
 
   def parse_row_nums(<<>>, d0, x, y, numStore, sinceFirstNum) when d0 !== nil do
     numStore =
-      Map.put(numStore, d0, %{x: (x - sinceFirstNum)..(x - 1), y: y})
+      Map.put(numStore, %{x: (x - sinceFirstNum)..(x - 1), y: y}, d0)
 
     %{nums: numStore}
   end
@@ -128,6 +128,7 @@ defmodule Day3 do
       |> Enum.with_index()
       |> Enum.map(fn {row, y} -> parse_row_nums(row, y) end)
       |> Enum.map(fn row -> row.nums end)
+      |> Enum.filter(fn row -> row !== %{} end)
       |> Enum.reduce(fn acc, row -> Map.merge(acc, row) end)
 
     within_symbol =
@@ -136,7 +137,7 @@ defmodule Day3 do
         {x, y} = key
 
         nums
-        |> Enum.map(fn {num, coords} ->
+        |> Enum.map(fn {coords, num} ->
           case coords.y + 1 === y or coords.y === y or coords.y - 1 === y do
             false ->
               {nil, coords}
@@ -163,7 +164,7 @@ defmodule Day3 do
         {x, y} = coords
 
         nums
-        |> Enum.map(fn {num, coords} ->
+        |> Enum.map(fn {coords, num} ->
           case coords.y + 1 === y or coords.y === y or coords.y - 1 === y do
             false ->
               {nil, coords}
@@ -192,8 +193,7 @@ defmodule Day3 do
 
     total_part_num =
       parse_nums(%{}, within_symbol, 0)
-      |> Map.keys()
-      |> Enum.reduce(0, fn num, acc ->
+      |> Enum.reduce(0, fn {num, _c}, acc ->
         acc + num
       end)
 
