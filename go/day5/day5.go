@@ -121,6 +121,83 @@ func solve(lines []string, seeds seed) int {
 	return slices.Min(finals)
 }
 
+func translateSeed(seed int, maps maps) int {
+	first := true
+	num := 0
+	for _, m := range maps {
+		if first {
+			num = m.translate(seed)
+			first = false
+		} else {
+			num = m.translate(num)
+		}
+	}
+
+	return num
+}
+
+func translateSeed2(seed int, maps maps) int {
+	first := true
+	num := 0
+	for _, m := range maps {
+		changed := false
+		for rng, row := range m.translateMap {
+			if seed >= rng.start && seed <= rng.end && first {
+				num = row.addKey + seed
+				first = false
+				changed = true
+				break
+			} else if num >= rng.start && num <= rng.end && !first {
+				num = row.addKey + num
+				changed = true
+				break
+			}
+		}
+		if !changed {
+			if first {
+				num = seed
+			}
+		}
+	}
+
+	return num
+}
+
+func solve2(lines []string, seeds seed2) int {
+	maps := maps{}
+	currMapLines := []string{}
+	for _, line := range lines {
+		if line == "" {
+			currMap := soilMap{}
+			currMap.translateMap = make(map[rng]soildMapRow)
+			currMap.parseMap(currMapLines)
+			maps = append(maps, currMap)
+			currMapLines = []string{}
+		} else {
+			currMapLines = append(currMapLines, line)
+		}
+	}
+
+	lowest := int(^uint(0) >> 1)
+
+	for _, seed := range seeds {
+		m := maps[0]
+		for rng, vals := range m.translateMap {
+			if seed.start >= rng.start && seed.end+seed.start <= rng.end {
+				for i := 0; i < seed.end; i++ {
+					num := i + seed.start + vals.addKey
+					calNum := translateSeed2(num, maps[1:])
+					if calNum < lowest {
+						lowest = calNum
+					}
+				}
+			}
+		}
+	}
+
+	return lowest
+}
+
 func parseSeeds(seedsStr string) seed {
 	seeds := strings.Split(seedsStr, " ")
 	newSeed := seed{}
@@ -129,7 +206,6 @@ func parseSeeds(seedsStr string) seed {
 	}
 
 	return newSeed
-
 }
 
 func parseSeeds2(seedsStr string) seed2 {
@@ -137,7 +213,7 @@ func parseSeeds2(seedsStr string) seed2 {
 	newSeed := seed2{}
 	startNum := 0
 	for i, seed := range seeds {
-		if i+1%2 == 0 {
+		if (i+1)%2 == 0 {
 			rng := rng{startNum, parseInt(seed)}
 			newSeed = append(newSeed, rng)
 		} else {
@@ -148,7 +224,7 @@ func parseSeeds2(seedsStr string) seed2 {
 	return newSeed
 }
 
-func day5() {
+func Day5() {
 	fileName := "input.txt"
 	file, err := os.Open(fileName)
 	if err != nil {
@@ -159,11 +235,13 @@ func day5() {
 
 	scanner := bufio.NewScanner(file)
 	var seeds seed
+	var seeds2 seed2
 	lines := []string{}
 	line := 0
 	for scanner.Scan() {
 		if line == 0 {
 			seeds = parseSeeds(strings.Split(scanner.Text(), ": ")[1])
+			seeds2 = parseSeeds2(strings.Split(scanner.Text(), ": ")[1])
 		} else if line > 1 {
 			lines = append(lines, scanner.Text())
 		}
@@ -172,5 +250,7 @@ func day5() {
 	}
 
 	minNum := solve(lines, seeds)
+	minNum2 := solve2(lines, seeds2)
 	fmt.Println(minNum)
+	fmt.Println(minNum2)
 }
