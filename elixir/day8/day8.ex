@@ -1,7 +1,3 @@
-# TODO 
-# fix string concat on parse_input, from <> to #{}#{}
-# finish rest of parse_input, check of edge cases fr
-
 defmodule Day8 do
   def parse_input(input) do
     parse_input(input, nil, 0, %{steps: nil, routes: %{}})
@@ -72,13 +68,37 @@ defmodule Day8 do
     parse_input(rest, <<curr>>, row, acc, key, true)
   end
 
+  def walk_route(steps, routes, start, final) do
+    walk_route(steps, steps, routes, start, final, 0)
+  end
+
+  def walk_route(<<step, rest::binary>>, steps, routes, curr_dest, final, acc) do
+    curr = Map.get(routes, curr_dest)
+
+    case <<step>> do
+      "L" ->
+        walk_route(rest, steps, routes, Map.get(curr, :L), final, acc + 1)
+
+      "R" ->
+        walk_route(rest, steps, routes, Map.get(curr, :R), final, acc + 1)
+    end
+  end
+
+  def walk_route(<<>>, steps, routes, curr_dest, final, acc) do
+    if curr_dest == final do
+      acc
+    else
+      walk_route(steps, steps, routes, curr_dest, final, acc)
+    end
+  end
+
   def main() do
     rows =
-      File.read!("test.txt")
+      File.read!("input.txt")
 
-    IO.puts(rows)
     parsed = parse_input(rows)
-    IO.puts("parsed: #{inspect(parsed)}")
+    steps = walk_route(parsed.steps, parsed.routes, "AAA", "ZZZ")
+    IO.puts("steps taken: #{steps}")
   end
 end
 
